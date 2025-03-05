@@ -1,0 +1,62 @@
+.container1 {
+    min-height: 100vh;
+    background: linear-gradient(to right, #fff 30%, rgb(146, 228, 234) 70%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    margin: 0 ;
+    margin-right: 0;
+    
+  }
+  
+  
+  .grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    max-width: 72rem;
+    align-items: center;
+  }
+  
+  .text-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .headline {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #02070b;
+  }
+  
+  .description {
+    font-size: 1.125rem;
+    color: #1f2937;
+  }
+  
+  .cta-button {
+    background-color: #2563eb;
+    color: #ffffff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 1rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    text-align: center;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+  }
+  
+  .cta-button:hover {
+    background-color: #1e40af;
+  }
+  
+  .image-section .image {
+    width: 100%;
+    max-height: 24rem;
+    object-fit: cover;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
