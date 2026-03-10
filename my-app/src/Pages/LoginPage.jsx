@@ -13,45 +13,46 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const blogRef = useRef(null);
 
-const handleLogin = async (event) => {
-  event.preventDefault();
+  const handleLogin = async (event) => {
+    event.preventDefault();
 
-  try {
-    const response = await fetch("http://localhost:4008/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      localStorage.setItem("isLoggedIn", JSON.stringify(data.user));
-      window.dispatchEvent(new Event("authChange"));
-      Swal.fire({
-        icon: "success",
-        title: "Login successful!",
-        showConfirmButton: false,
-        timer: 1200,
+    try {
+      const response = await fetch("http://localhost:4008/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
       });
-      setTimeout(() => navigate("/home"), 1200);
-    } else {
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("isLoggedIn", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token); // Store Token
+        window.dispatchEvent(new Event("authChange"));
+        Swal.fire({
+          icon: "success",
+          title: "Login successful!",
+          showConfirmButton: false,
+          timer: 1200,
+        });
+        setTimeout(() => navigate("/home"), 1200);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Login Failed",
+          text: data.message || "Invalid username or password",
+          confirmButtonText: "Try Again",
+        });
+      }
+    } catch (error) {
       Swal.fire({
-        icon: "error",
-        title: "Login Failed",
-        text: data.message || "Invalid username or password",
-        confirmButtonText: "Try Again",
+        icon: "warning",
+        title: "Server Error",
+        text: "The server is not responding. You are seeing the actual interface with dummy User.",
+        confirmButtonText: "OK",
       });
     }
-  } catch (error) {
-    Swal.fire({
-      icon: "warning",
-      title: "Server Error",
-      text: "The server is not responding. You are seeing the actual interface with dummy User.",
-      confirmButtonText: "OK",
-    });
-  }
-};
+  };
 
 
   const nextBlog = () => {

@@ -21,12 +21,22 @@ export function PostProvider({ children }) {
 
   const addPost = async (post) => {
     try {
-      const response = await fetch("http://localhost:4008/create-post", {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:4008/posts/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify(post),
       });
 
+      if (response.status === 401) {
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("token");
+        window.dispatchEvent(new Event("authChange"));
+        return;
+      }
       if (response.ok) {
         fetchPosts();
       }
@@ -37,10 +47,20 @@ export function PostProvider({ children }) {
 
   const deletePost = async (id) => {
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`http://localhost:4008/posts/${id}`, {
         method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
       });
 
+      if (response.status === 401) {
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("token");
+        window.dispatchEvent(new Event("authChange"));
+        return;
+      }
       if (!response.ok) {
         throw new Error("Failed to delete post");
       }
@@ -53,12 +73,22 @@ export function PostProvider({ children }) {
 
   const updatePost = async (id, updatedData) => {
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`http://localhost:4008/posts/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify(updatedData),
       });
 
+      if (response.status === 401) {
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("token");
+        window.dispatchEvent(new Event("authChange"));
+        return;
+      }
       if (!response.ok) {
         throw new Error("Failed to update post");
       }
@@ -73,8 +103,77 @@ export function PostProvider({ children }) {
     }
   };
 
+  const likePost = async (id, username) => {
+    try {
+      // Username is still passed for optimisitc UI or legacy check interaction if needed, 
+      // but backend uses token.
+      console.log(`Liking post ${id} with token: ${token}`);
+      const response = await fetch(`http://localhost:4008/posts/${id}/like`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({}),
+      });
+
+      console.log("Like response status:", response.status);
+
+      if (response.status === 401) {
+        console.warn("Unauthorized! Logging out.");
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("token");
+        window.dispatchEvent(new Event("authChange"));
+        return;
+      }
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Like failed:", errText);
+        throw new Error("Failed to like post");
+      }
+
+      const updatedPost = await response.json();
+      console.log("Like success:", updatedPost);
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => (post._id === id ? updatedPost : post))
+      );
+    } catch (error) {
+      console.error("Error liking post:", error);
+    }
+  };
+
+  const addComment = async (id, commentData) => {
+    try {
+      const token = localStorage.getItem("token");
+      // commentData has { username, content }. Backend ignores username, uses token.
+      const response = await fetch(`http://localhost:4008/posts/${id}/comment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ content: commentData.content }),
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("token");
+        window.dispatchEvent(new Event("authChange"));
+        return;
+      }
+      if (!response.ok) throw new Error("Failed to add comment");
+
+      const updatedPost = await response.json();
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => (post._id === id ? updatedPost : post))
+      );
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  };
+
   return (
-    <PostContext.Provider value={{ posts, addPost, deletePost, updatePost }}>
+    <PostContext.Provider value={{ posts, addPost, deletePost, updatePost, likePost, addComment }}>
       {children}
     </PostContext.Provider>
   );

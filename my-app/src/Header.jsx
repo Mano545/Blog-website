@@ -1,9 +1,9 @@
-import { Link,useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { CgProfile } from "react-icons/cg";
 import { LogOut, TextCursorIcon } from 'lucide-react';
 import "./Header.css";
-import {Link as ScrollLink } from "react-scroll"
+import { Link as ScrollLink } from "react-scroll"
 
 export default function Header() {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ export default function Header() {
     };
 
     window.addEventListener("authChange", handleAuthChange);
-    window.addEventListener("storage", handleAuthChange); 
+    window.addEventListener("storage", handleAuthChange);
     return () => {
       window.removeEventListener("authChange", handleAuthChange);
       window.removeEventListener("storage", handleAuthChange);
@@ -30,7 +30,8 @@ export default function Header() {
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
-    window.dispatchEvent(new Event("authChange")); 
+    localStorage.removeItem("token");
+    window.dispatchEvent(new Event("authChange"));
     setUser(null);
     navigate("/home");
   };
@@ -54,7 +55,7 @@ export default function Header() {
       }
     }
   };
-  
+
 
   return (
     <header className={`header ${isNavbarHidden ? "hidden" : ""}`}>
@@ -82,7 +83,7 @@ export default function Header() {
                 <CgProfile className="big-profile-icon" />
               )}
             </Link>
-            <button onClick={handleLogout} className="auth-button logout"><LogOut size={13} className="auth-button.logout"/> Logout</button>
+            <button onClick={handleLogout} className="auth-button logout"><LogOut size={13} className="auth-button.logout" /> Logout</button>
           </>
         ) : (
           <>

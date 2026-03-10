@@ -8,45 +8,45 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
- const handleRegister = async (event) => {
-  event.preventDefault();
+  const handleRegister = async (event) => {
+    event.preventDefault();
 
-  try {
-    const response = await fetch("http://localhost:4008/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      Swal.fire({
-        icon: "success",
-        title: "Registered successfully!",
-        showConfirmButton: false,
-        timer: 1200,
+    try {
+      const response = await fetch("http://localhost:4008/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
       });
-      setUsername("");
-      setPassword("");
-      setTimeout(() => window.location.href = "/login-page", 1200);
-    } else {
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Swal.fire({
+          icon: "success",
+          title: "Registered successfully!",
+          showConfirmButton: false,
+          timer: 1200,
+        });
+        setUsername("");
+        setPassword("");
+        setTimeout(() => window.location.href = "/login-page", 1200);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Registration Failed",
+          text: data.message || "Username already taken or invalid input",
+          confirmButtonText: "Try Again",
+        });
+      }
+    } catch (error) {
       Swal.fire({
-        icon: "error",
-        title: "Registration Failed",
-        text: data.message || "Username already taken or invalid input",
-        confirmButtonText: "Try Again",
+        icon: "warning",
+        title: "Server Error",
+        text: "Registration service is currently unavailable.",
+        confirmButtonText: "OK",
       });
     }
-  } catch (error) {
-    Swal.fire({
-      icon: "warning",
-      title: "Server Error",
-      text: "Registration service is currently unavailable.",
-      confirmButtonText: "OK",
-    });
-  }
-};
+  };
 
   return (
     <div className="register-container">
