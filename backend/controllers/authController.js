@@ -41,6 +41,8 @@ const loginUser = async (req, res) => {
         const user = await User.findOne({ username });
         if (!user) return res.status(400).json({ message: "Invalid username or password" });
 
+        if (user.isBlocked) return res.status(403).json({ message: "Account is blocked" });
+
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) return res.status(400).json({ message: "Invalid username or password" });
 

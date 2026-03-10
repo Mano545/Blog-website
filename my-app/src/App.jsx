@@ -1,5 +1,5 @@
 import './App.css';
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import HomePage from './Pages/HomePage';
 import { PostProvider } from "./Pages/PostContext";
 import Layout from './Layout';
@@ -12,29 +12,31 @@ import BlogPage from './Pages/BlogPage';
 import Profile from './Pages/Profile';
 import Contact from './Pages/Contact';
 import CategoryPage from './Pages/category';
-
-
+import AdminLoginPage from './Pages/AdminLoginPage';
+import AdminDashboard from './Pages/AdminDashboard';
 
 function App() {
-  
-  return ( 
+  return (
     <PostProvider>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<HomePage />} />
-            <Route path="/login-page" element={<Loginpage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/Blog" element={<BlogPage />} />
-            <Route path="/Home" element={<HomePage />} />
-            <Route path="/post/:id" element={<PostPage />} />
-            <Route path="/create" element={<CreatePostPage />} />
-            <Route path="/edit/:id" element={<EditPost />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/contact" element={<Contact />}/>
-            <Route path="/category/:category" element={<CategoryPage/>}/>
-          </Route>
-        </Routes>
-      </PostProvider>
+      <Routes>
+        <Route path="/admin-login" element={<AdminLoginPage />} />
+        <Route path="/admin" element={<Navigate to="/admin-login" replace />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/" element={<Layout />}>
+          <Route index element={<HomePage />} />
+          <Route path="/login-page" element={<Loginpage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/Blog" element={<BlogPage />} />
+          <Route path="/Home" element={<HomePage />} />
+          <Route path="/post/:id" element={<PostPage />} />
+          <Route path="/create" element={<CreatePostPage />} />
+          <Route path="/edit/:id" element={<EditPost />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/category/:category" element={<CategoryPage />} />
+        </Route>
+      </Routes>
+    </PostProvider>
   );
 }
 
