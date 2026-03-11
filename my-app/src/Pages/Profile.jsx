@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import "./Profile.css";
 import { usePosts } from "./PostContext";
 import Swal from "sweetalert2";
@@ -6,166 +7,181 @@ import Swal from "sweetalert2";
 export default function Profile() {
   const [user, setUser] = useState(null);
   const { posts } = usePosts();
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [formData, setFormData] = useState({
-    username: "",
-    name: "",
-    avatar: "",
-    bio: "",
-  });
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("isLoggedIn"));
-    if (storedUser) {
-      setUser(storedUser);
-    }
+    const loadProfile = async () => {
+      const storedUser = JSON.parse(localStorage.getItem("isLoggedIn"));
+      if (storedUser) setUser(storedUser);
+
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await fetch("http://localhost:4008/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const dbUser = await res.json();
+        localStorage.setItem("isLoggedIn", JSON.stringify(dbUser));
+        setUser(dbUser);
+      } catch {
+        // ignore, keep local user
+      }
+    };
+
+    loadProfile();
   }, []);
 
-  const loggedInUser = user?.username;
+  const loggedInUsername = user?.username;
 
-  const userPosts = posts.filter(
-    (p) =>
-      p.author?.username === loggedInUser || p.author === loggedInUser
-  );
+  const userPosts = useMemo(() => {
+    if (!loggedInUsername) return [];
+    return posts.filter(
+      (p) => p.author?.username === loggedInUsername || p.author === loggedInUsername
+    );
+  }, [posts, loggedInUsername]);
 
+  const email = user?.email || (user?.username ? `${user.username}@blogapp.com` : "");
+  const bio = user?.bio || "No bio added yet.";
 
-  
+  const getAvatarSrc = (avatar) => {
+    if (!avatar) return "/default.jpg";
+    const trimmed = String(avatar).trim();
+    if (!trimmed || trimmed === "null" || trimmed === "undefined") return "/default.jpg";
+    return trimmed;
+  };
 
-const handleEditProfile = () => {
-  setFormData({
-    username: user.username,
-    name: user.name,
-    avatar: user.avatar || "",
-    bio: user.bio || "",
-  });
+  const handleEditProfile = () => {
+    if (!user) return;
 
-  Swal.fire({
-    title: "Edit Profile",
-    html: `
-      <input id="name" class="swal2-input" placeholder="Name" value="${user.name}" />
-      <input id="avatar" class="swal2-input" placeholder="Avatar URL" value="${user.avatar || ""}" />
-      <input id="bio" class="swal2-input" placeholder="Bio" value="${user.bio || ""}" />
-    `,
-    focusConfirm: false,
-    showCancelButton: true,
-    confirmButtonText: "Save",
-    preConfirm: () => {
-      const name = document.getElementById("name").value;
-      const avatar = document.getElementById("avatar").value;
-      const bio = document.getElementById("bio").value;
-      return { name, avatar, bio };
-    },
-  }).then((result) => {
-    if (result.isConfirmed) {
-      const updatedUser = {
-        ...user,
-        name: result.value.name,
-        avatar: result.value.avatar,
-        bio: result.value.bio,
-      };
+    Swal.fire({
+      title: "Edit Profile",
+      html: `
+        <input id="avatar" class="swal2-input" placeholder="Avatar URL" value="${user.avatar || ""}" />
+        <input id="email" class="swal2-input" placeholder="Email" value="${user.email || ""}" />
+        <input id="bio" class="swal2-input" placeholder="Bio" value="${user.bio || ""}" />
+        <textarea id="about" class="swal2-textarea" placeholder="About">${user.about || ""}</textarea>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: "Save",
+      preConfirm: () => {
+        const avatar = document.getElementById("avatar").value;
+        const email = document.getElementById("email").value;
+        const bio = document.getElementById("bio").value;
+        const about = document.getElementById("about").value;
+        return { avatar, email, bio, about };
+      },
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
-      localStorage.setItem("isLoggedIn", JSON.stringify(updatedUser));
+      fetch("http://localhost:4008/auth/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          avatar: result.value.avatar,
+          email: result.value.email,
+          bio: result.value.bio,
+          about: result.value.about,
+        }),
+      })
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || "Update failed");
+          const updatedUser = data.user;
+          localStorage.setItem("isLoggedIn", JSON.stringify(updatedUser));
+          setUser(updatedUser);
+          Swal.fire("Saved!", "Your profile has been updated.", "success");
+        })
+        .catch(() => {
+          Swal.fire("Error", "Failed to update profile.", "error");
+        });
+    });
+  };
 
-      const allUsers = JSON.parse(localStorage.getItem("users")) || [];
-      const updatedUsers = allUsers.map((u) =>
-        u.username === user.username ? updatedUser : u
-      );
+  if (!user) {
+    return (
+      <div className="profile-page">
+        <p>User not logged in.</p>
+      </div>
+    );
+  }
 
-      localStorage.setItem("users", JSON.stringify(updatedUsers));
-      setUser(updatedUser);
-
-      Swal.fire("Saved!", "Your profile has been updated.", "success");
-    }
-  });
-};
-  
   return (
-    <div className="profile-page">
-      {user ? (
-        <div className="profile-layout">
-          <div className="blogs-section">
-            <h3>Blogs Published</h3>
-            {userPosts.length > 0 ? (
-              userPosts.map((blog) => (
-                <div key={blog._id} className="blog-card">
-                  <div className="blog-content">
-                    <h4>{blog.title}</h4>
-                    <p>{blog.summary}</p>
-                  </div>
-                  <div className="blog-image">
-                    <img src={blog.cover || "default-cover.png"} alt={blog.title} />
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p>No blogs published yet.</p>
-            )}
-          </div>
-
-          <div className="profile-section">
+    <div className="profile-page profile-v2">
+      <div className="profile-grid">
+        {/* Left profile card */}
+        <aside className="profile-card">
+          <div className="profile-avatar-wrap">
             <img
-              src={user.avatar || "/default-avatar.png"}
+              src={getAvatarSrc(user.avatar)}
               alt="User Avatar"
               className="profile-avatar"
+              onError={(e) => {
+                e.currentTarget.src = "/default.jpg";
+              }}
             />
-            <h2>@{user.username}</h2>
-            <p>{user.name}</p>
-            <p className="joined-date">Bio:</p>
-            <p>{user.bio}</p>
-            <button
-              className="edit-profile-button"
-              onClick={handleEditProfile}
-            >
-              Edit Profile
-            </button>
           </div>
 
-          {showEditForm && (
-            <div className="edit-profile-popup">
-              <div className="edit-profile-form">
-                <h3>Edit Profile</h3>
-                <label>
-                  Name:
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                  />
-                </label>
-                <label>
-                  Avatar URL:
-                  <input
-                    type="text"
-                    name="avatar"
-                    value={formData.avatar}
-                    onChange={handleChange}
-                  />
-                </label>
-                <label>
-                  Bio:
-                  <input
-                    type="text"
-                    name="bio"
-                    value={formData.bio}
-                    onChange={handleChange}
-                  />
-                </label>
-                <div className="form-actions">
-                  <button className="fof" onClick={handleSaveProfile}>
-                    Save
-                  </button>
-                  <button className="fof" onClick={() => setShowEditForm(false)}>
-                    Cancel
-                  </button>
-                </div>
+          <div className="profile-identity">
+            <h2 className="profile-username">@{user.username}</h2>
+            <p className="profile-email">{email}</p>
+          </div>
+
+          <div className="profile-section-block">
+            <h3 className="profile-block-title">Bio</h3>
+            <p className="profile-block-text">{bio}</p>
+          </div>
+
+          <div className="profile-section-block">
+            <h3 className="profile-block-title">About</h3>
+            <p className="profile-block-text">
+              {user.about || "Tell others a little about yourself here."}
+            </p>
+          </div>
+
+          <button className="edit-profile-button" onClick={handleEditProfile}>
+            Edit Profile
+          </button>
+        </aside>
+
+        {/* Right: user's blogs */}
+        <section className="profile-posts">
+          <div className="profile-posts-header">
+            <h3>My Blogs</h3>
+            <p className="profile-posts-sub">Your published posts appear here.</p>
+          </div>
+
+          <div className="profile-posts-grid">
+            {userPosts.length > 0 ? (
+              userPosts.map((blog) => (
+                <Link key={blog._id} to={`/post/${blog._id}`} className="profile-post-card">
+                  <div className="profile-post-cover">
+                    <img
+                      src={blog.cover || "default-cover.png"}
+                      alt={blog.title}
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="profile-post-body">
+                    <h4 className="profile-post-title">{blog.title}</h4>
+                    {blog.summary && <p className="profile-post-summary">{blog.summary}</p>}
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="profile-empty">
+                <p>No blogs published yet.</p>
               </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <p>User not logged in.</p>
-      )}
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

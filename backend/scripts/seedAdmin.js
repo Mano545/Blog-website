@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 
 const ADMIN_USERNAME = "Admin";
 const ADMIN_PASSWORD = "Mano@123";
+const ADMIN_EMAIL = "admin@blogapp.com";
 
 /**
  * Ensures the admin user exists. Call this after DB connection.
@@ -13,6 +14,7 @@ const seedAdmin = async () => {
     if (existingAdmin) {
       existingAdmin.role = "ADMIN";
       existingAdmin.isBlocked = false;
+      if (!existingAdmin.email) existingAdmin.email = ADMIN_EMAIL;
       const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
       existingAdmin.password = hashedPassword;
       await existingAdmin.save();
@@ -23,6 +25,7 @@ const seedAdmin = async () => {
     const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
     const adminUser = new User({
       username: ADMIN_USERNAME,
+      email: ADMIN_EMAIL,
       password: hashedPassword,
       role: "ADMIN",
     });

@@ -1,12 +1,16 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Signup.css";
-import Swal from "sweetalert2";
-
+import SuccessPopup from "../components/SuccessPopup";
+import ErrorPopup from "../components/ErrorPopup";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [errorPopup, setErrorPopup] = useState(null);
+  const navigate = useNavigate();
 
   const handleRegister = async (event) => {
     event.preventDefault();
@@ -15,41 +19,55 @@ export default function RegisterPage() {
       const response = await fetch("http://localhost:4008/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, email, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        Swal.fire({
-          icon: "success",
-          title: "Registered successfully!",
-          showConfirmButton: false,
-          timer: 1200,
-        });
+        setShowSuccess(true);
         setUsername("");
+        setEmail("");
         setPassword("");
-        setTimeout(() => window.location.href = "/login-page", 1200);
+        setTimeout(() => navigate("/login-page"), 1200);
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Registration Failed",
-          text: data.message || "Username already taken or invalid input",
-          confirmButtonText: "Try Again",
+        const isUsernameTaken = data.message?.toLowerCase().includes("username") && data.message?.toLowerCase().includes("taken");
+        const isEmailTaken = data.message?.toLowerCase().includes("email");
+        setErrorPopup({
+          title: "Something went wrong?",
+          message: isUsernameTaken
+            ? "Username already exists. Please choose another username."
+            : isEmailTaken
+              ? "Email already in use. Please use a different email."
+              : (data.message || "Registration failed. Please try again."),
+          duration: 2000,
         });
       }
     } catch (error) {
-      Swal.fire({
-        icon: "warning",
-        title: "Server Error",
-        text: "Registration service is currently unavailable.",
-        confirmButtonText: "OK",
+      setErrorPopup({
+        title: "Something went wrong?",
+        message: "Registration service is currently unavailable. Please try again.",
+        duration: 2000,
       });
     }
   };
 
   return (
     <div className="register-container">
+      {showSuccess && (
+        <SuccessPopup
+          message="Account Created Successfully"
+          onClose={() => setShowSuccess(false)}
+        />
+      )}
+      {errorPopup && (
+        <ErrorPopup
+          title={errorPopup.title}
+          message={errorPopup.message}
+          duration={errorPopup.duration}
+          onClose={() => setErrorPopup(null)}
+        />
+      )}
       <div className="register-box">
         <form className="register" onSubmit={handleRegister}>
           <h1>Register</h1>
@@ -61,6 +79,13 @@ export default function RegisterPage() {
             required
           />
           <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
             type="password"
             placeholder="Password"
             value={password}
@@ -68,7 +93,6 @@ export default function RegisterPage() {
             required
           />
           <button type="submit">Register</button>
-          {message && <p className="register-message">{message}</p>}
           <div className="login-container1">
             <p>Already have an account?</p>
             <button className="login-button" onClick={() => window.location.href = "/login-page"}>

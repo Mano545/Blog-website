@@ -1,5 +1,6 @@
 import './App.css';
 import { Route, Routes, Navigate } from "react-router-dom";
+import SuccessToastListener from "./components/SuccessToastListener";
 import HomePage from './Pages/HomePage';
 import { PostProvider } from "./Pages/PostContext";
 import Layout from './Layout';
@@ -18,6 +19,7 @@ import AdminDashboard from './Pages/AdminDashboard';
 function App() {
   return (
     <PostProvider>
+      <SuccessToastListener />
       <Routes>
         <Route path="/admin-login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<Navigate to="/admin-login" replace />} />

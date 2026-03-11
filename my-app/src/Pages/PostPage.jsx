@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import "./PostPage.css";
 import Swal from "sweetalert2";
 import { usePosts } from "./PostContext";
+import ConfirmPopup from "../components/ConfirmPopup";
 
 export default function PostPage() {
   const { id } = useParams();
@@ -17,11 +18,15 @@ export default function PostPage() {
 
   const loggedInUser = JSON.parse(localStorage.getItem("isLoggedIn"))?.username;
   const [commentText, setCommentText] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleLike = () => {
     if (!loggedInUser) {
       Swal.fire("Error", "You must be logged in to like posts", "error");
       return;
+    }
+    if (post.likes?.includes(loggedInUser)) {
+      return; // prevent multiple likes from same user
     }
     likePost(post._id, loggedInUser);
   };
@@ -38,26 +43,14 @@ export default function PostPage() {
     setCommentText("");
   };
 
-  const handleDelete = async () => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "Do you really want to delete this post?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, delete it",
-      cancelButtonText: "Cancel",
-    });
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
 
-    if (!result.isConfirmed) return;
-
+  const handleDeleteConfirm = async () => {
+    setShowDeleteConfirm(false);
     try {
       await deletePost(id);
-      Swal.fire({
-        title: "Deleted!",
-        text: "Post deleted successfully!",
-        icon: "success",
-        confirmButtonText: "OK",
-      });
       navigate("/Home");
     } catch (error) {
       console.error("Error deleting post:", error);
@@ -72,8 +65,26 @@ export default function PostPage() {
 
   return (
     <div className="post-page">
+      {showDeleteConfirm && (
+        <ConfirmPopup
+          title="Are you sure?"
+          message="You are about to delete this post. This action cannot be undone."
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
       <div className="post-meta">
-        <span className="author">by @{post.author || "Unknown"}</span>
+        <span className="author" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <img
+            src={post.authorProfile?.avatar || "/default.jpg"}
+            alt="Author"
+            style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover", border: "1px solid #ddd" }}
+            onError={(e) => {
+              e.currentTarget.src = "/default.jpg";
+            }}
+          />
+          by @{post.authorProfile?.username || post.author || "Unknown"}
+        </span>
         <span className="date">
           {post.createdAt
             ? new Date(post.createdAt).toLocaleDateString("en-US", {
@@ -116,7 +127,7 @@ export default function PostPage() {
           color: post.likes?.includes(loggedInUser) ? "#fff" : "#333",
           border: "none", padding: "8px 16px", borderRadius: "4px", cursor: "pointer"
         }}>
-          {post.likes?.includes(loggedInUser) ? "Unlike" : "Like"} ({post.likes?.length || 0})
+          {post.likes?.includes(loggedInUser) ? "Liked" : "Like"} ({post.likes?.length || 0})
         </button>
 
         <div className="comments-section" style={{ marginTop: "30px" }}>
@@ -153,7 +164,7 @@ export default function PostPage() {
           <Link to={`/edit/${post._id}`}>
             <button className="edit-button">Edit Post</button>
           </Link>
-          <button className="delete-button" onClick={handleDelete}>
+          <button className="delete-button" onClick={handleDeleteClick}>
             Delete Post
           </button>
         </div>

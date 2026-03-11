@@ -105,9 +105,19 @@ export function PostProvider({ children }) {
 
   const likePost = async (id, username) => {
     try {
-      // Username is still passed for optimisitc UI or legacy check interaction if needed, 
-      // but backend uses token.
-      console.log(`Liking post ${id} with token: ${token}`);
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      // Optimistic update: add the like locally first
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post._id !== id) return post;
+          const likes = Array.isArray(post.likes) ? post.likes : [];
+          if (likes.includes(username)) return post; // prevent multiple likes
+          return { ...post, likes: [...likes, username] };
+        })
+      );
+
       const response = await fetch(`http://localhost:4008/posts/${id}/like`, {
         method: "PUT",
         headers: {
@@ -117,23 +127,17 @@ export function PostProvider({ children }) {
         body: JSON.stringify({}),
       });
 
-      console.log("Like response status:", response.status);
-
       if (response.status === 401) {
-        console.warn("Unauthorized! Logging out.");
         localStorage.removeItem("isLoggedIn");
         localStorage.removeItem("token");
         window.dispatchEvent(new Event("authChange"));
         return;
       }
       if (!response.ok) {
-        const errText = await response.text();
-        console.error("Like failed:", errText);
         throw new Error("Failed to like post");
       }
 
       const updatedPost = await response.json();
-      console.log("Like success:", updatedPost);
       setPosts((prevPosts) =>
         prevPosts.map((post) => (post._id === id ? updatedPost : post))
       );

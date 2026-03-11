@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/user");
 
 const protect = async (req, res, next) => {
     let token;
@@ -14,16 +15,25 @@ const protect = async (req, res, next) => {
             // Verify token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            // Get user from the token
-            // We attach the full payload or just the id/username. 
-            // Existing system uses username heavily, so let's ensure we support that.
-            // Ideally we would fetch the user from DB to ensure they still exist, 
-            // but for speed/matching current style, we will trust the token content 
-            // OR fetch lightly. Let's fetch to be secure.
-            // BUT, we need to avoid circular dependency if we import User model here.
-            // It's safe to import User model.
+            const user = await User.findById(decoded.id).select("-password");
+            if (!user) {
+                return res.status(401).json({ message: "Not authorized, user not found" });
+            }
+            if (user.isBlocked) {
+                return res.status(403).json({ message: "Account is blocked" });
+            }
 
-            req.user = decoded; // { id: ..., username: ... }
+            // Attach full DB user (for profile persistence + author info)
+            req.user = {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                avatar: user.avatar,
+                bio: user.bio,
+                about: user.about,
+                role: user.role,
+                isBlocked: user.isBlocked,
+            };
 
             next();
         } catch (error) {

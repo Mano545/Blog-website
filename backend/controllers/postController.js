@@ -1,9 +1,37 @@
 const Post = require("../models/post");
+const User = require("../models/user");
+
+const attachAuthorProfiles = async (posts) => {
+    const list = Array.isArray(posts) ? posts : [];
+    const usernames = [...new Set(list.map((p) => p.author).filter(Boolean))];
+    if (usernames.length === 0) return list;
+
+    const users = await User.find({ username: { $in: usernames } })
+        .select("username avatar bio");
+
+    const userMap = new Map(users.map((u) => [u.username, u]));
+
+    return list.map((post) => {
+        const authorUser = userMap.get(post.author);
+        const plain = post.toObject ? post.toObject() : post;
+        return {
+            ...plain,
+            authorProfile: authorUser
+                ? {
+                    username: authorUser.username,
+                    avatar: authorUser.avatar,
+                    bio: authorUser.bio,
+                }
+                : null,
+        };
+    });
+};
 
 const getPosts = async (req, res) => {
     try {
         const posts = await Post.find().sort({ createdAt: -1 });
-        res.status(200).json(posts);
+        const withAuthors = await attachAuthorProfiles(posts);
+        res.status(200).json(withAuthors);
     } catch (error) {
         res.status(500).json({ message: "Server error" });
     }
@@ -16,7 +44,8 @@ const getPostsByCategory = async (req, res) => {
         if (posts.length === 0) {
             return res.status(404).json({ message: "No posts found in this category" });
         }
-        res.status(200).json(posts);
+        const withAuthors = await attachAuthorProfiles(posts);
+        res.status(200).json(withAuthors);
     } catch (error) {
         res.status(500).json({ message: "Server error" });
     }
@@ -40,7 +69,8 @@ const createPost = async (req, res) => {
             author: req.user.username
         });
         await newPost.save();
-        res.status(201).json({ message: "Post created successfully", post: newPost });
+        const withAuthors = await attachAuthorProfiles([newPost]);
+        res.status(201).json({ message: "Post created successfully", post: withAuthors[0] });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error" });
@@ -66,7 +96,8 @@ const updatePost = async (req, res) => {
             { new: true }
         );
 
-        res.status(200).json({ message: "Post updated successfully", post: updatedPost });
+        const withAuthors = await attachAuthorProfiles([updatedPost]);
+        res.status(200).json({ message: "Post updated successfully", post: withAuthors[0] });
     } catch (error) {
         console.error("Error updating post:", error);
         res.status(500).json({ message: "Server error", error: error.message });
@@ -109,7 +140,8 @@ const likePost = async (req, res) => {
         }
 
         await post.save();
-        res.status(200).json(post);
+        const withAuthors = await attachAuthorProfiles([post]);
+        res.status(200).json(withAuthors[0]);
     } catch (error) {
         console.error("Error liking post:", error);
         res.status(500).json({ message: "Server error" });
@@ -135,7 +167,8 @@ const commentPost = async (req, res) => {
 
         post.comments.push(newComment);
         await post.save();
-        res.status(201).json(post);
+        const withAuthors = await attachAuthorProfiles([post]);
+        res.status(201).json(withAuthors[0]);
     } catch (error) {
         console.error("Error adding comment:", error);
         res.status(500).json({ message: "Server error" });
