@@ -1,0 +1,29 @@
+services:
+  mongodb:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "5000:4008"
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/mydb
+    depends_on:
+      - mongodb
+
+  frontend:
+    build: ./my-app
+    container_name: frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:
