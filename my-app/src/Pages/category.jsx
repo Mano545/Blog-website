@@ -14,7 +14,7 @@ export default function CategoryPage() {
   useEffect(() => {
     const fetchCategoryPosts = async () => {
       try {
-        const response = await fetch(`http://localhost:4008/posts/category/${category}`);
+        const response = await fetch(`https://blog-website-aaxa.onrender.com/posts/category/${category}`);
         if (!response.ok) {
           throw new Error("No posts found in this category.");
         }

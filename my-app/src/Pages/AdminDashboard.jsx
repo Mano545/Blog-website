@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AdminDashboard.css";
 
-const API_BASE = "http://localhost:4008/admin";
+const API_BASE = "https://blog-website-aaxa.onrender.com/admin";
 
 function getAdminToken() {
   return localStorage.getItem("adminToken");

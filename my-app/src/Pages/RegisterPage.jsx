@@ -16,7 +16,7 @@ export default function RegisterPage() {
     event.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:4008/auth/register", {
+      const response = await fetch("https://blog-website-aaxa.onrender.com/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),

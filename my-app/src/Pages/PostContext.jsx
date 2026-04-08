@@ -7,7 +7,7 @@ export function PostProvider({ children }) {
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch("http://localhost:4008/posts");
+      const response = await fetch("https://blog-website-aaxa.onrender.com/posts");
       const data = await response.json();
       setPosts(data);
     } catch (error) {
@@ -22,7 +22,7 @@ export function PostProvider({ children }) {
   const addPost = async (post) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:4008/posts/create", {
+      const response = await fetch("https://blog-website-aaxa.onrender.com/posts/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,7 +48,7 @@ export function PostProvider({ children }) {
   const deletePost = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:4008/posts/${id}`, {
+      const response = await fetch(`https://blog-website-aaxa.onrender.com/posts/${id}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -74,7 +74,7 @@ export function PostProvider({ children }) {
   const updatePost = async (id, updatedData) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:4008/posts/${id}`, {
+      const response = await fetch(`https://blog-website-aaxa.onrender.com/posts/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -118,7 +118,7 @@ export function PostProvider({ children }) {
         })
       );
 
-      const response = await fetch(`http://localhost:4008/posts/${id}/like`, {
+      const response = await fetch(`https://blog-website-aaxa.onrender.com/posts/${id}/like`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -150,7 +150,7 @@ export function PostProvider({ children }) {
     try {
       const token = localStorage.getItem("token");
       // commentData has { username, content }. Backend ignores username, uses token.
-      const response = await fetch(`http://localhost:4008/posts/${id}/comment`, {
+      const response = await fetch(`https://blog-website-aaxa.onrender.com/posts/${id}/comment`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
