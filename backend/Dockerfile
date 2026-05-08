@@ -1,7 +1,10 @@
-from node:18
-workdir /app
-copy package*.json ./
-run npm install
+FROM node:20-slim
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install --omit=dev
 COPY . .
-Expose 4008
-cmd ["node","Server.js"]
+
+# Match your app's port
+EXPOSE 4008
+
+CMD ["node", "Server.js"]

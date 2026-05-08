@@ -1,10 +1,5 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
-
-/**
- * Protects admin routes - only users with role ADMIN can access.
- * Returns "Access Denied" for non-admin users.
- */
 const protectAdmin = async (req, res, next) => {
   let token;
 

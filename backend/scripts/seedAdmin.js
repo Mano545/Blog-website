@@ -1,13 +1,8 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
-
 const ADMIN_USERNAME = "Admin";
 const ADMIN_PASSWORD = "Mano@123";
 const ADMIN_EMAIL = "admin@blogapp.com";
-
-/**
- * Ensures the admin user exists. Call this after DB connection.
- */
 const seedAdmin = async () => {
   try {
     const existingAdmin = await User.findOne({ username: ADMIN_USERNAME });
@@ -21,7 +16,6 @@ const seedAdmin = async () => {
       console.log("Admin user updated.");
       return;
     }
-
     const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
     const adminUser = new User({
       username: ADMIN_USERNAME,
@@ -35,5 +29,4 @@ const seedAdmin = async () => {
     console.error("Error seeding admin:", error);
   }
 };
-
 module.exports = seedAdmin;

@@ -9,12 +9,8 @@ const protect = async (req, res, next) => {
         req.headers.authorization.startsWith("Bearer")
     ) {
         try {
-            // Get token from header
             token = req.headers.authorization.split(" ")[1];
-
-            // Verify token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
             const user = await User.findById(decoded.id).select("-password");
             if (!user) {
                 return res.status(401).json({ message: "Not authorized, user not found" });
@@ -22,8 +18,6 @@ const protect = async (req, res, next) => {
             if (user.isBlocked) {
                 return res.status(403).json({ message: "Account is blocked" });
             }
-
-            // Attach full DB user (for profile persistence + author info)
             req.user = {
                 id: user.id,
                 username: user.username,
@@ -41,10 +35,8 @@ const protect = async (req, res, next) => {
             res.status(401).json({ message: "Not authorized, token failed" });
         }
     }
-
     if (!token) {
         res.status(401).json({ message: "Not authorized, no token" });
     }
 };
-
 module.exports = { protect };
