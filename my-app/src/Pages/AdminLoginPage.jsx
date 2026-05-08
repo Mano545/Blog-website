@@ -13,7 +13,7 @@ export default function AdminLoginPage() {
     setMessage("");
 
     try {
-      const response = await fetch("https://blog-website-aaxa.onrender.com/admin/login", {
+      const response = await fetch("https://blog-website-backend-guxe.onrender.com/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),

@@ -17,7 +17,7 @@ export default function Profile() {
       if (!token) return;
 
       try {
-        const res = await fetch("https://blog-website-aaxa.onrender.com/auth/me", {
+        const res = await fetch("https://blog-website-backend-guxe.onrender.com/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) return;
@@ -77,7 +77,7 @@ export default function Profile() {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      fetch("https://blog-website-aaxa.onrender.com/auth/me", {
+      fetch("https://blog-website-backend-guxe.onrender.com/auth/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
